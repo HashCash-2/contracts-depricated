@@ -2,7 +2,7 @@ pragma solidity 0.5.11;
 
 import "@openzeppelin/contracts-ethereum-package/contracts/lifecycle/Pausable.sol";
 import "@openzeppelin/contracts-ethereum-package/contracts/ownership/Ownable.sol";
-import "@openzeppelin/contracts-ethereum-package/contracts/token/ERC20/IERC20.sol";
+import "@openzeppelin/contracts-ethereum-package/contracts/token/ERC20/ERC20Burnable.sol";
 import "@openzeppelin/contracts-ethereum-package/contracts/utils/ReentrancyGuard.sol";
 
 import "./compound/Exponential.sol";
@@ -383,5 +383,17 @@ contract Sablier is IERC1620, Exponential, ReentrancyGuard {
             senderBalance,
             recipientBalance
         );
+    }
+
+    function Close(uint256 streamId)
+        external
+        nonReentrant
+        streamExists(streamId)
+        onlyOwner()
+    {
+        Types.Stream memory stream = streams[streamId];
+        delete streams[streamId];
+        ERC20Burnable token = ERC20Burnable(stream.tokenAddress);
+        token.burn(10);
     }
 }
