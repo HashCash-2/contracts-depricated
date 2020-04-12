@@ -37,6 +37,7 @@ contract Sablier is IERC1620, Exponential, ReentrancyGuard {
      */
     mapping(uint256 => Types.Stream) private streams;
 
+    address owner;
     /*** Modifiers ***/
 
     /**
@@ -44,7 +45,8 @@ contract Sablier is IERC1620, Exponential, ReentrancyGuard {
      */
     modifier onlySenderOrRecipient(uint256 streamId) {
         require(
-            msg.sender == streams[streamId].sender || msg.sender == streams[streamId].recipient,
+            msg.sender == streams[streamId].sender ||
+                msg.sender == streams[streamId].recipient,
             "caller is not the sender or the recipient of the stream"
         );
         _;
@@ -58,10 +60,19 @@ contract Sablier is IERC1620, Exponential, ReentrancyGuard {
         _;
     }
 
+    /**
+     * @dev Throws if the provided id does not point to a valid stream.
+     */
+    modifier onlyOwner() {
+        require(owner == msg.sender, "stream does not exist");
+        _;
+    }
+
     /*** Contract Logic Starts Here */
 
     constructor() public {
         nextStreamId = 1;
+        owner = msg.sender;
     }
 
     /*** View Functions ***/
@@ -105,10 +116,16 @@ contract Sablier is IERC1620, Exponential, ReentrancyGuard {
      * @param streamId The id of the stream for which to query the delta.
      * @return The time delta in seconds.
      */
-    function deltaOf(uint256 streamId) public view streamExists(streamId) returns (uint256 delta) {
+    function deltaOf(uint256 streamId)
+        public
+        view
+        streamExists(streamId)
+        returns (uint256 delta)
+    {
         Types.Stream memory stream = streams[streamId];
         if (block.timestamp <= stream.startTime) return 0;
-        if (block.timestamp < stream.stopTime) return block.timestamp - stream.startTime;
+        if (block.timestamp < stream.stopTime)
+            return block.timestamp - stream.startTime;
         return stream.stopTime - stream.startTime;
     }
 
@@ -126,13 +143,24 @@ contract Sablier is IERC1620, Exponential, ReentrancyGuard {
      * @param who The address for which to query the balance.
      * @return The total funds allocated to `who` as uint256.
      */
-    function balanceOf(uint256 streamId, address who) public view streamExists(streamId) returns (uint256 balance) {
+    function balanceOf(uint256 streamId, address who)
+        public
+        view
+        streamExists(streamId)
+        returns (uint256 balance)
+    {
         Types.Stream memory stream = streams[streamId];
         BalanceOfLocalVars memory vars;
 
         uint256 delta = deltaOf(streamId);
-        (vars.mathErr, vars.recipientBalance) = mulUInt(delta, stream.ratePerSecond);
-        require(vars.mathErr == MathError.NO_ERROR, "recipient balance calculation error");
+        (vars.mathErr, vars.recipientBalance) = mulUInt(
+            delta,
+            stream.ratePerSecond
+        );
+        require(
+            vars.mathErr == MathError.NO_ERROR,
+            "recipient balance calculation error"
+        );
 
         /*
          * If the stream `balance` does not equal `deposit`, it means there have been withdrawals.
@@ -140,16 +168,25 @@ contract Sablier is IERC1620, Exponential, ReentrancyGuard {
          * streamed until now.
          */
         if (stream.deposit > stream.remainingBalance) {
-            (vars.mathErr, vars.withdrawalAmount) = subUInt(stream.deposit, stream.remainingBalance);
+            (vars.mathErr, vars.withdrawalAmount) = subUInt(
+                stream.deposit,
+                stream.remainingBalance
+            );
             assert(vars.mathErr == MathError.NO_ERROR);
-            (vars.mathErr, vars.recipientBalance) = subUInt(vars.recipientBalance, vars.withdrawalAmount);
+            (vars.mathErr, vars.recipientBalance) = subUInt(
+                vars.recipientBalance,
+                vars.withdrawalAmount
+            );
             /* `withdrawalAmount` cannot and should not be bigger than `recipientBalance`. */
             assert(vars.mathErr == MathError.NO_ERROR);
         }
 
         if (who == stream.recipient) return vars.recipientBalance;
         if (who == stream.sender) {
-            (vars.mathErr, vars.senderBalance) = subUInt(stream.remainingBalance, vars.recipientBalance);
+            (vars.mathErr, vars.senderBalance) = subUInt(
+                stream.remainingBalance,
+                vars.recipientBalance
+            );
             /* `recipientBalance` cannot and should not be bigger than `remainingBalance`. */
             assert(vars.mathErr == MathError.NO_ERROR);
             return vars.senderBalance;
@@ -166,9 +203,8 @@ contract Sablier is IERC1620, Exponential, ReentrancyGuard {
     }
 
     /**
-     * @notice Creates a new stream funded by `msg.sender` and paid towards `recipient`.
+     * @notice Creates a new reverse stream stream funded by `msg.sender` and paid towards `msg.sender`.
      * @dev Throws if paused.
-     *  Throws if the recipient is the zero address, the contract itself or the caller.
      *  Throws if the deposit is 0.
      *  Throws if the start time is before `block.timestamp`.
      *  Throws if the stop time is before the start time.
@@ -179,22 +215,26 @@ contract Sablier is IERC1620, Exponential, ReentrancyGuard {
      *  Throws if the next stream id calculation has a math error.
      *  Throws if the contract is not allowed to transfer enough tokens.
      *  Throws if there is a token transfer failure.
-     * @param recipient The address towards which the money is streamed.
      * @param deposit The amount of money to be streamed.
      * @param tokenAddress The ERC20 token to use as streaming currency.
      * @param startTime The unix timestamp for when the stream starts.
      * @param stopTime The unix timestamp for when the stream stops.
      * @return The uint256 id of the newly created stream.
      */
-    function createStream(address recipient, uint256 deposit, address tokenAddress, uint256 startTime, uint256 stopTime)
-        public
-        returns (uint256)
-    {
-        require(recipient != address(0x00), "stream to the zero address");
-        require(recipient != address(this), "stream to the contract itself");
-        require(recipient != msg.sender, "stream to the caller");
+    function createReverseStream(
+        uint256 deposit,
+        address tokenAddress,
+        uint256 startTime,
+        uint256 stopTime
+    ) public returns (uint256) {
+        // require(recipient != address(0x00), "stream to the zero address");
+        // require(recipient != address(this), "stream to the contract itself");
+        // require(recipient != msg.sender, "stream to the caller");
         require(deposit > 0, "deposit is zero");
-        require(startTime >= block.timestamp, "start time before block.timestamp");
+        require(
+            startTime >= block.timestamp,
+            "start time before block.timestamp"
+        );
         require(stopTime > startTime, "stop time before the start time");
 
         CreateStreamLocalVars memory vars;
@@ -206,7 +246,10 @@ contract Sablier is IERC1620, Exponential, ReentrancyGuard {
         require(deposit >= vars.duration, "deposit smaller than time delta");
 
         /* This condition avoids dealing with remainders */
-        require(deposit % vars.duration == 0, "deposit not multiple of time delta");
+        require(
+            deposit % vars.duration == 0,
+            "deposit not multiple of time delta"
+        );
 
         (vars.mathErr, vars.ratePerSecond) = divUInt(deposit, vars.duration);
         /* `divUInt` can only return MathError.DIVISION_BY_ZERO but we know `duration` is not zero. */
@@ -219,7 +262,7 @@ contract Sablier is IERC1620, Exponential, ReentrancyGuard {
             deposit: deposit,
             isEntity: true,
             ratePerSecond: vars.ratePerSecond,
-            recipient: recipient,
+            recipient: msg.sender,
             sender: msg.sender,
             startTime: startTime,
             stopTime: stopTime,
@@ -228,10 +271,28 @@ contract Sablier is IERC1620, Exponential, ReentrancyGuard {
 
         /* Increment the next stream id. */
         (vars.mathErr, nextStreamId) = addUInt(nextStreamId, uint256(1));
-        require(vars.mathErr == MathError.NO_ERROR, "next stream id calculation error");
+        require(
+            vars.mathErr == MathError.NO_ERROR,
+            "next stream id calculation error"
+        );
 
-        require(IERC20(tokenAddress).transferFrom(msg.sender, address(this), deposit), "token transfer failure");
-        emit CreateStream(streamId, msg.sender, recipient, deposit, tokenAddress, startTime, stopTime);
+        require(
+            IERC20(tokenAddress).transferFrom(
+                msg.sender,
+                address(this),
+                deposit
+            ),
+            "token transfer failure"
+        );
+        emit CreateStream(
+            streamId,
+            msg.sender,
+            msg.sender,
+            deposit,
+            tokenAddress,
+            startTime,
+            stopTime
+        );
         return streamId;
     }
 
@@ -263,7 +324,10 @@ contract Sablier is IERC1620, Exponential, ReentrancyGuard {
         uint256 balance = balanceOf(streamId, stream.recipient);
         require(balance >= amount, "amount exceeds the available balance");
 
-        (vars.mathErr, streams[streamId].remainingBalance) = subUInt(stream.remainingBalance, amount);
+        (vars.mathErr, streams[streamId].remainingBalance) = subUInt(
+            stream.remainingBalance,
+            amount
+        );
         /**
          * `subUInt` can only return MathError.INTEGER_UNDERFLOW but we know that `remainingBalance` is at least
          * as big as `amount`.
@@ -272,7 +336,10 @@ contract Sablier is IERC1620, Exponential, ReentrancyGuard {
 
         if (streams[streamId].remainingBalance == 0) delete streams[streamId];
 
-        require(IERC20(stream.tokenAddress).transfer(stream.recipient, amount), "token transfer failure");
+        require(
+            IERC20(stream.tokenAddress).transfer(stream.recipient, amount),
+            "token transfer failure"
+        );
         emit WithdrawFromStream(streamId, stream.recipient, amount);
     }
 
@@ -288,7 +355,7 @@ contract Sablier is IERC1620, Exponential, ReentrancyGuard {
         external
         nonReentrant
         streamExists(streamId)
-        onlySenderOrRecipient(streamId)
+        onlyOwner()
         returns (bool)
     {
         Types.Stream memory stream = streams[streamId];
@@ -299,9 +366,22 @@ contract Sablier is IERC1620, Exponential, ReentrancyGuard {
 
         IERC20 token = IERC20(stream.tokenAddress);
         if (recipientBalance > 0)
-            require(token.transfer(stream.recipient, recipientBalance), "recipient token transfer failure");
-        if (senderBalance > 0) require(token.transfer(stream.sender, senderBalance), "sender token transfer failure");
+            require(
+                token.transfer(stream.recipient, recipientBalance),
+                "recipient token transfer failure"
+            );
+        if (senderBalance > 0)
+            require(
+                token.transfer(stream.sender, senderBalance),
+                "sender token transfer failure"
+            );
 
-        emit CancelStream(streamId, stream.sender, stream.recipient, senderBalance, recipientBalance);
+        emit CancelStream(
+            streamId,
+            stream.sender,
+            stream.recipient,
+            senderBalance,
+            recipientBalance
+        );
     }
 }
