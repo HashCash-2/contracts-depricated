@@ -7,9 +7,9 @@
     "test": "test"
   },
   "scripts": {
-          "compile":"truffle compile",
-
-        "migrate":"truffle migrate",
+    "ganache": "ganache-cli -b 1",
+    "compile": "truffle compile",
+    "migrate": "truffle migrate",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
@@ -23,7 +23,8 @@
   },
   "dependencies": {
     "@openzeppelin/contracts-ethereum-package": "2.2.3",
-    "@openzeppelin/upgrades": "2.5.0"
+    "@openzeppelin/upgrades": "2.5.0",
+    "ganache-cli": "^6.9.1"
   },
   "devDependencies": {
     "@truffle/hdwallet-provider": "^1.0.32",
