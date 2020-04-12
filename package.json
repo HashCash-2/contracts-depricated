@@ -1,0 +1,38 @@
+{
+  "name": "hashcash-contracts",
+  "version": "1.0.0",
+  "description": "HashCash contracts that allow creation of streams and personal tokens",
+  "main": "truffle-config.js",
+  "directories": {
+    "test": "test"
+  },
+  "scripts": {
+          "compile":"truffle compile",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/HashCash-2/contracts.git"
+  },
+  "author": "vaibhavchellani223@gmail.com",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/HashCash-2/contracts/issues"
+  },
+  "dependencies": {
+    "@openzeppelin/contracts-ethereum-package": "2.2.3",
+    "@openzeppelin/upgrades": "2.5.0"
+  },
+  "devDependencies": {
+    "@truffle/hdwallet-provider": "^1.0.32",
+    "commitizen": "^3.1.2",
+    "cz-conventional-changelog": "^2.1.0",
+    "dotenv": "^8.2.0",
+    "prettier": "^1.19.1",
+    "prettier-plugin-solidity": "^1.0.0-alpha.42",
+    "shx": "^0.3.2",
+    "solc": "0.5.11",
+    "truffle": "5.0.37"
+  },
+  "homepage": "https://github.com/HashCash-2/contracts#readme"
+}
