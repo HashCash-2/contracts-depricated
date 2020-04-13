@@ -2,19 +2,17 @@ pragma solidity 0.5.11;
 
 import "@openzeppelin/contracts-ethereum-package/contracts/lifecycle/Pausable.sol";
 import "@openzeppelin/contracts-ethereum-package/contracts/ownership/Ownable.sol";
-import "@openzeppelin/contracts-ethereum-package/contracts/token/ERC20/ERC20Burnable.sol";
+import "@openzeppelin/contracts-ethereum-package/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts-ethereum-package/contracts/utils/ReentrancyGuard.sol";
-
 import "./compound/Exponential.sol";
 import "./interfaces/IERC1620.sol";
 import "./Types.sol";
 
 
 /**
- * @title Sablier's Money Streaming
- * @author Sablier
+ * @title HashCash's core protocol
  */
-contract Sablier is IERC1620, Exponential, ReentrancyGuard {
+contract HashCash is IERC1620, Exponential, ReentrancyGuard {
     /*** Storage Properties ***/
 
     /**
@@ -38,8 +36,8 @@ contract Sablier is IERC1620, Exponential, ReentrancyGuard {
     mapping(uint256 => Types.Stream) private streams;
 
     address owner;
-    /*** Modifiers ***/
 
+    /*** Modifiers ***/
     /**
      * @dev Throws if the caller is not the sender of the recipient of the stream.
      */
@@ -227,6 +225,36 @@ contract Sablier is IERC1620, Exponential, ReentrancyGuard {
         uint256 startTime,
         uint256 stopTime
     ) public returns (uint256) {
+        createStream(msg.sender, deposit, tokenAddress, startTime, stopTime);
+    }
+
+    /**
+     * @notice Creates a new  stream stream funded by `msg.sender` and paid towards `msg.sender`.
+     * @dev Throws if paused.
+     *  Throws if the deposit is 0.
+     *  Throws if the start time is before `block.timestamp`.
+     *  Throws if the stop time is before the start time.
+     *  Throws if the duration calculation has a math error.
+     *  Throws if the deposit is smaller than the duration.
+     *  Throws if the deposit is not a multiple of the duration.
+     *  Throws if the rate calculation has a math error.
+     *  Throws if the next stream id calculation has a math error.
+     *  Throws if the contract is not allowed to transfer enough tokens.
+     *  Throws if there is a token transfer failure.
+     * @param recipient The address towards which the money is streamed.
+     * @param deposit The amount of money to be streamed.
+     * @param tokenAddress The ERC20 token to use as streaming currency.
+     * @param startTime The unix timestamp for when the stream starts.
+     * @param stopTime The unix timestamp for when the stream stops.
+     * @return The uint256 id of the newly created stream.
+     */
+    function createStream(
+        address recipient,
+        uint256 deposit,
+        address tokenAddress,
+        uint256 startTime,
+        uint256 stopTime
+    ) public returns (uint256) {
         // require(recipient != address(0x00), "stream to the zero address");
         // require(recipient != address(this), "stream to the contract itself");
         // require(recipient != msg.sender, "stream to the caller");
@@ -262,7 +290,7 @@ contract Sablier is IERC1620, Exponential, ReentrancyGuard {
             deposit: deposit,
             isEntity: true,
             ratePerSecond: vars.ratePerSecond,
-            recipient: msg.sender,
+            recipient: recipient,
             sender: msg.sender,
             startTime: startTime,
             stopTime: stopTime,
@@ -287,7 +315,7 @@ contract Sablier is IERC1620, Exponential, ReentrancyGuard {
         emit CreateStream(
             streamId,
             msg.sender,
-            msg.sender,
+            recipient,
             deposit,
             tokenAddress,
             startTime,
@@ -393,7 +421,7 @@ contract Sablier is IERC1620, Exponential, ReentrancyGuard {
     {
         Types.Stream memory stream = streams[streamId];
         delete streams[streamId];
-        ERC20Burnable token = ERC20Burnable(stream.tokenAddress);
-        token.burn(10);
+        IERC20 token = IERC20(stream.tokenAddress);
+        // token.burn(10);
     }
 }
