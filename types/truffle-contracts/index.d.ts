@@ -102,28 +102,24 @@ export interface HashCashInstance extends Truffle.ContractInstance {
     (
       deposit: number | BigNumber | string,
       tokenAddress: string | BigNumber,
-      startTime: number | BigNumber | string,
       stopTime: number | BigNumber | string,
       txDetails?: Truffle.TransactionDetails
     ): Promise<Truffle.TransactionResponse>;
     call(
       deposit: number | BigNumber | string,
       tokenAddress: string | BigNumber,
-      startTime: number | BigNumber | string,
       stopTime: number | BigNumber | string,
       txDetails?: Truffle.TransactionDetails
     ): Promise<BigNumber>;
     sendTransaction(
       deposit: number | BigNumber | string,
       tokenAddress: string | BigNumber,
-      startTime: number | BigNumber | string,
       stopTime: number | BigNumber | string,
       txDetails?: Truffle.TransactionDetails
     ): Promise<string>;
     estimateGas(
       deposit: number | BigNumber | string,
       tokenAddress: string | BigNumber,
-      startTime: number | BigNumber | string,
       stopTime: number | BigNumber | string,
       txDetails?: Truffle.TransactionDetails
     ): Promise<number>;

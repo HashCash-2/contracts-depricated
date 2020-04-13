@@ -215,17 +215,21 @@ contract HashCash is IERC1620, Exponential, ReentrancyGuard {
      *  Throws if there is a token transfer failure.
      * @param deposit The amount of money to be streamed.
      * @param tokenAddress The ERC20 token to use as streaming currency.
-     * @param startTime The unix timestamp for when the stream starts.
      * @param stopTime The unix timestamp for when the stream stops.
      * @return The uint256 id of the newly created stream.
      */
     function createReverseStream(
         uint256 deposit,
         address tokenAddress,
-        uint256 startTime,
         uint256 stopTime
     ) public returns (uint256) {
-        createStream(msg.sender, deposit, tokenAddress, startTime, stopTime);
+        createStream(
+            msg.sender,
+            deposit,
+            tokenAddress,
+            block.timestamp,
+            stopTime
+        );
     }
 
     /**
@@ -274,10 +278,10 @@ contract HashCash is IERC1620, Exponential, ReentrancyGuard {
         require(deposit >= vars.duration, "deposit smaller than time delta");
 
         /* This condition avoids dealing with remainders */
-        require(
-            deposit % vars.duration == 0,
-            "deposit not multiple of time delta"
-        );
+        // require(
+        //     deposit % vars.duration == 0,
+        //     "deposit not multiple of time delta"
+        // );
 
         (vars.mathErr, vars.ratePerSecond) = divUInt(deposit, vars.duration);
         /* `divUInt` can only return MathError.DIVISION_BY_ZERO but we know `duration` is not zero. */
