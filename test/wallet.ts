@@ -1,6 +1,6 @@
 const bip39 = require("bip39");
 const hdkey = require("ethereumjs-wallet/hdkey");
-var packageJSON = require("../../package.json");
+var packageJSON = require("../package.json");
 export const mnemonics = packageJSON.config.mnemonics;
 
 export function generateFirstWallets(
@@ -17,4 +17,3 @@ export function generateFirstWallets(
 
   return result;
 }
-

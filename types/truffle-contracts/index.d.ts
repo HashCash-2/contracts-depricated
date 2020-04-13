@@ -69,41 +69,6 @@ export interface HashCashInstance extends Truffle.ContractInstance {
     estimateGas(txDetails?: Truffle.TransactionDetails): Promise<number>;
   };
 
-  createStream: {
-    (
-      recipient: string | BigNumber,
-      deposit: number | BigNumber | string,
-      tokenAddress: string | BigNumber,
-      startTime: number | BigNumber | string,
-      stopTime: number | BigNumber | string,
-      txDetails?: Truffle.TransactionDetails
-    ): Promise<Truffle.TransactionResponse>;
-    call(
-      recipient: string | BigNumber,
-      deposit: number | BigNumber | string,
-      tokenAddress: string | BigNumber,
-      startTime: number | BigNumber | string,
-      stopTime: number | BigNumber | string,
-      txDetails?: Truffle.TransactionDetails
-    ): Promise<BigNumber>;
-    sendTransaction(
-      recipient: string | BigNumber,
-      deposit: number | BigNumber | string,
-      tokenAddress: string | BigNumber,
-      startTime: number | BigNumber | string,
-      stopTime: number | BigNumber | string,
-      txDetails?: Truffle.TransactionDetails
-    ): Promise<string>;
-    estimateGas(
-      recipient: string | BigNumber,
-      deposit: number | BigNumber | string,
-      tokenAddress: string | BigNumber,
-      startTime: number | BigNumber | string,
-      stopTime: number | BigNumber | string,
-      txDetails?: Truffle.TransactionDetails
-    ): Promise<number>;
-  };
-
   fee(txDetails?: Truffle.TransactionDetails): Promise<BigNumber>;
 
   getStream(
@@ -156,6 +121,41 @@ export interface HashCashInstance extends Truffle.ContractInstance {
       txDetails?: Truffle.TransactionDetails
     ): Promise<string>;
     estimateGas(
+      deposit: number | BigNumber | string,
+      tokenAddress: string | BigNumber,
+      startTime: number | BigNumber | string,
+      stopTime: number | BigNumber | string,
+      txDetails?: Truffle.TransactionDetails
+    ): Promise<number>;
+  };
+
+  createStream: {
+    (
+      recipient: string | BigNumber,
+      deposit: number | BigNumber | string,
+      tokenAddress: string | BigNumber,
+      startTime: number | BigNumber | string,
+      stopTime: number | BigNumber | string,
+      txDetails?: Truffle.TransactionDetails
+    ): Promise<Truffle.TransactionResponse>;
+    call(
+      recipient: string | BigNumber,
+      deposit: number | BigNumber | string,
+      tokenAddress: string | BigNumber,
+      startTime: number | BigNumber | string,
+      stopTime: number | BigNumber | string,
+      txDetails?: Truffle.TransactionDetails
+    ): Promise<BigNumber>;
+    sendTransaction(
+      recipient: string | BigNumber,
+      deposit: number | BigNumber | string,
+      tokenAddress: string | BigNumber,
+      startTime: number | BigNumber | string,
+      stopTime: number | BigNumber | string,
+      txDetails?: Truffle.TransactionDetails
+    ): Promise<string>;
+    estimateGas(
+      recipient: string | BigNumber,
       deposit: number | BigNumber | string,
       tokenAddress: string | BigNumber,
       startTime: number | BigNumber | string,
