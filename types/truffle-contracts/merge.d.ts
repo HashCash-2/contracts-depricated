@@ -9,6 +9,8 @@ declare global {
   namespace Truffle {
     interface Artifacts {
       require(name: "Context"): TruffleContracts.ContextContract;
+      require(name: "ERC20"): TruffleContracts.ERC20Contract;
+      require(name: "ERC20Burnable"): TruffleContracts.ERC20BurnableContract;
       require(name: "HashCash"): TruffleContracts.HashCashContract;
       require(name: "IERC1620"): TruffleContracts.IERC1620Contract;
       require(name: "IERC20"): TruffleContracts.IERC20Contract;
@@ -20,7 +22,6 @@ declare global {
       require(
         name: "ReentrancyGuard"
       ): TruffleContracts.ReentrancyGuardContract;
-      require(name: "Sablier"): TruffleContracts.SablierContract;
     }
   }
 }

@@ -127,11 +127,70 @@ contract HashCash is IERC1620, Exponential, ReentrancyGuard {
         return stream.stopTime - stream.startTime;
     }
 
+    function deltaOfReverseStream(uint256 streamId)
+        public
+        view
+        streamExists(streamId)
+        returns (uint256 delta)
+    {
+        Types.Stream memory stream = streams[streamId];
+        if (block.timestamp < stream.stopTime)
+            return block.timestamp - stream.startTime;
+        return stream.stopTime - stream.startTime;
+    }
+
     struct BalanceOfLocalVars {
         MathError mathErr;
         uint256 recipientBalance;
         uint256 withdrawalAmount;
         uint256 senderBalance;
+    }
+
+    /**
+     * @notice Returns the available funds for the given stream id and address.
+     * @dev Throws if the id does not point to a valid stream.
+     * @param streamId The id of the stream for which to query the balance.
+     * @return The total funds allocated to `receiver` as uint256.
+     */
+    function balanceOfReverseStream(uint256 streamId)
+        public
+        view
+        streamExists(streamId)
+        returns (uint256 balance)
+    {
+        Types.Stream memory stream = streams[streamId];
+        BalanceOfLocalVars memory vars;
+
+        uint256 delta = deltaOfReverseStream(streamId);
+        (vars.mathErr, vars.recipientBalance) = mulUInt(
+            delta,
+            stream.ratePerSecond
+        );
+        require(
+            vars.mathErr == MathError.NO_ERROR,
+            "recipient balance calculation error"
+        );
+
+        /*
+         * If the stream `balance` does not equal `deposit`, it means there have been withdrawals.
+         * We have to subtract the total amount withdrawn from the amount of money that has been
+         * streamed until now.
+         */
+        if (stream.deposit > stream.remainingBalance) {
+            (vars.mathErr, vars.withdrawalAmount) = subUInt(
+                stream.deposit,
+                stream.remainingBalance
+            );
+            assert(vars.mathErr == MathError.NO_ERROR);
+            (vars.mathErr, vars.recipientBalance) = subUInt(
+                vars.recipientBalance,
+                vars.withdrawalAmount
+            );
+            /* `withdrawalAmount` cannot and should not be bigger than `recipientBalance`. */
+            assert(vars.mathErr == MathError.NO_ERROR);
+        }
+
+        return vars.recipientBalance;
     }
 
     /**
@@ -263,11 +322,12 @@ contract HashCash is IERC1620, Exponential, ReentrancyGuard {
         // require(recipient != address(this), "stream to the contract itself");
         // require(recipient != msg.sender, "stream to the caller");
         require(deposit > 0, "deposit is zero");
-        require(
-            startTime >= block.timestamp,
-            "start time before block.timestamp"
-        );
-        require(stopTime > startTime, "stop time before the start time");
+        // require(
+        //     startTime >= block.timestamp,
+        //     "start time before block.timestamp"
+        // );
+
+        // require(stopTime > startTime, "stop time before the start time");
 
         CreateStreamLocalVars memory vars;
         (vars.mathErr, vars.duration) = subUInt(stopTime, startTime);
@@ -275,7 +335,7 @@ contract HashCash is IERC1620, Exponential, ReentrancyGuard {
         assert(vars.mathErr == MathError.NO_ERROR);
 
         /* Without this, the rate per second would be zero. */
-        require(deposit >= vars.duration, "deposit smaller than time delta");
+        // require(deposit >= vars.duration, "deposit smaller than time delta");
 
         /* This condition avoids dealing with remainders */
         // require(
@@ -417,11 +477,11 @@ contract HashCash is IERC1620, Exponential, ReentrancyGuard {
         );
     }
 
-    function Close(uint256 streamId)
+    // TODO make it permissioned to only the receiver address
+    function Close(uint256 streamId, uint256 burnPart, uint256 refundPart)
         external
         nonReentrant
         streamExists(streamId)
-        onlyOwner()
     {
         Types.Stream memory stream = streams[streamId];
         delete streams[streamId];
