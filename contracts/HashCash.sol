@@ -2,7 +2,7 @@ pragma solidity 0.5.11;
 
 import "@openzeppelin/contracts-ethereum-package/contracts/lifecycle/Pausable.sol";
 import "@openzeppelin/contracts-ethereum-package/contracts/ownership/Ownable.sol";
-import "@openzeppelin/contracts-ethereum-package/contracts/token/ERC20/IERC20.sol";
+import "@openzeppelin/contracts-ethereum-package/contracts/token/ERC20/ERC20Burnable.sol";
 import "@openzeppelin/contracts-ethereum-package/contracts/utils/ReentrancyGuard.sol";
 import "./compound/Exponential.sol";
 import "./interfaces/IERC1620.sol";
@@ -181,6 +181,7 @@ contract HashCash is IERC1620, Exponential, ReentrancyGuard {
                 stream.deposit,
                 stream.remainingBalance
             );
+
             assert(vars.mathErr == MathError.NO_ERROR);
             (vars.mathErr, vars.recipientBalance) = subUInt(
                 vars.recipientBalance,
@@ -369,7 +370,7 @@ contract HashCash is IERC1620, Exponential, ReentrancyGuard {
         );
 
         require(
-            IERC20(tokenAddress).transferFrom(
+            ERC20Burnable(tokenAddress).transferFrom(
                 msg.sender,
                 address(this),
                 deposit
@@ -429,7 +430,10 @@ contract HashCash is IERC1620, Exponential, ReentrancyGuard {
         if (streams[streamId].remainingBalance == 0) delete streams[streamId];
 
         require(
-            IERC20(stream.tokenAddress).transfer(stream.recipient, amount),
+            ERC20Burnable(stream.tokenAddress).transfer(
+                stream.recipient,
+                amount
+            ),
             "token transfer failure"
         );
         emit WithdrawFromStream(streamId, stream.recipient, amount);
@@ -456,7 +460,7 @@ contract HashCash is IERC1620, Exponential, ReentrancyGuard {
 
         delete streams[streamId];
 
-        IERC20 token = IERC20(stream.tokenAddress);
+        ERC20Burnable token = ERC20Burnable(stream.tokenAddress);
         if (recipientBalance > 0)
             require(
                 token.transfer(stream.recipient, recipientBalance),
@@ -477,6 +481,12 @@ contract HashCash is IERC1620, Exponential, ReentrancyGuard {
         );
     }
 
+    struct CreateCloseStreamVars {
+        MathError mathErr;
+        uint256 burnAmount;
+        uint256 refundAmount;
+    }
+
     // TODO make it permissioned to only the receiver address
     function Close(uint256 streamId, uint256 burnPart, uint256 refundPart)
         external
@@ -485,7 +495,13 @@ contract HashCash is IERC1620, Exponential, ReentrancyGuard {
     {
         Types.Stream memory stream = streams[streamId];
         delete streams[streamId];
-        IERC20 token = IERC20(stream.tokenAddress);
-        // token.burn(10);
+        ERC20Burnable token = ERC20Burnable(stream.tokenAddress);
+        uint256 remainingBalance = balanceOfReverseStream(streamId);
+        // CreateCloseStreamVars memory vars;
+
+        // (vars.mathErr, vars.burnAmount) = divUInt(deposit, vars.duration);
+        /* `divUInt` can only return MathError.DIVISION_BY_ZERO but we know `duration` is not zero. */
+        // assert(vars.mathErr == MathError.NO_ERROR);
+        token.burn(remainingBalance);
     }
 }
