@@ -5,6 +5,7 @@ const HDWalletProvider = require("truffle-hdwallet-provider");
 const MNEMONIC =
   process.env.MNEMONIC ||
   "clock radar mass judge dismiss just intact mind resemble fringe diary casino";
+const API_KEY = process.env.API_KEY;
 
 module.exports = {
   test_file_extension_regexp: /.*\.ts$/,
@@ -16,9 +17,34 @@ module.exports = {
     },
     matic: {
       provider: function() {
-        return new HDWalletPrvider(MNEMONIC, `https://testnet2.matic.network`);
+        return new HDWalletProvider(
+          MNEMONIC,
+          `https://testnetv3.matic.network`
+        );
       },
       network_id: "*",
+      // gas: 8000000000
+    },
+
+    ropsten: {
+      provider: function() {
+        return new HDWalletProvider(
+          MNEMONIC,
+          `https://ropsten.infura.io/v3/${API_KEY}`
+        );
+      },
+      network_id: "*",
+      // gas: 8000000000
+    },
+    goerli: {
+      provider: function() {
+        return new HDWalletProvider(
+          MNEMONIC,
+          `https://goerli.infura.io/v3/${API_KEY}`
+        );
+      },
+      network_id: "*",
+      skipDryRun: true,
       // gas: 8000000000
     },
   },

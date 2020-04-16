@@ -335,7 +335,7 @@ contract HashCash is IERC1620, Exponential, ReentrancyGuard {
         assert(vars.mathErr == MathError.NO_ERROR);
 
         /* Without this, the rate per second would be zero. */
-        // require(deposit >= vars.duration, "deposit smaller than time delta");
+        require(deposit >= vars.duration, "deposit smaller than time delta");
 
         /* This condition avoids dealing with remainders */
         // require(
