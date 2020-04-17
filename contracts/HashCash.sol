@@ -481,27 +481,17 @@ contract HashCash is IERC1620, Exponential, ReentrancyGuard {
         );
     }
 
-    struct CreateCloseStreamVars {
-        MathError mathErr;
-        uint256 burnAmount;
-        uint256 refundAmount;
-    }
-
     // TODO make it permissioned to only the receiver address
-    function Close(uint256 streamId, uint256 burnPart, uint256 refundPart)
+    function Close(uint256 streamId)
         external
         nonReentrant
         streamExists(streamId)
     {
+        uint256 remainingBalance = balanceOfReverseStream(streamId);
         Types.Stream memory stream = streams[streamId];
         delete streams[streamId];
         ERC20Burnable token = ERC20Burnable(stream.tokenAddress);
-        uint256 remainingBalance = balanceOfReverseStream(streamId);
-        // CreateCloseStreamVars memory vars;
 
-        // (vars.mathErr, vars.burnAmount) = divUInt(deposit, vars.duration);
-        /* `divUInt` can only return MathError.DIVISION_BY_ZERO but we know `duration` is not zero. */
-        // assert(vars.mathErr == MathError.NO_ERROR);
         token.burn(remainingBalance);
     }
 }

@@ -19,7 +19,7 @@ module.exports = {
       provider: function() {
         return new HDWalletProvider(
           MNEMONIC,
-          `https://testnetv3.matic.network`
+          `https://testnet2.matic.network`
         );
       },
       network_id: "*",

@@ -47,6 +47,11 @@ contract("HashCash", async function(accounts) {
     //   );
     //   console.log("balance after sleep", balanceOfStream.toString());
     // }
+    console.log("here", (await PTinstance.totalSupply()).toString());
+    // test closing stream
+    await HCInstance.Close(nextStreamId.toNumber() - 1);
+
+    console.log((await PTinstance.totalSupply()).toString());
   });
 });
 

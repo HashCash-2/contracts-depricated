@@ -530,26 +530,18 @@ export interface HashCashInstance extends Truffle.ContractInstance {
   Close: {
     (
       streamId: number | BigNumber | string,
-      burnPart: number | BigNumber | string,
-      refundPart: number | BigNumber | string,
       txDetails?: Truffle.TransactionDetails
     ): Promise<Truffle.TransactionResponse>;
     call(
       streamId: number | BigNumber | string,
-      burnPart: number | BigNumber | string,
-      refundPart: number | BigNumber | string,
       txDetails?: Truffle.TransactionDetails
     ): Promise<void>;
     sendTransaction(
       streamId: number | BigNumber | string,
-      burnPart: number | BigNumber | string,
-      refundPart: number | BigNumber | string,
       txDetails?: Truffle.TransactionDetails
     ): Promise<string>;
     estimateGas(
       streamId: number | BigNumber | string,
-      burnPart: number | BigNumber | string,
-      refundPart: number | BigNumber | string,
       txDetails?: Truffle.TransactionDetails
     ): Promise<number>;
   };
